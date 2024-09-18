@@ -2,15 +2,17 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { dbService } from "../firebase";
 import Divided from "../components/Dividend";
+import Stock from "../components/Stock";
+import StockFactory from "../components/StockFactory";
 
 function Portfolio( {user} ) {
-    const [stocks       , setStocks     ] = useState([]);
-    const [isNewStock   , setIsNewStock ] = useState(false);
+    const [stocks   , setStocks ] = useState([]);
+    const [isNull   , setIsNull ] = useState(true);
 
     const getStocks = () => {
         const q = query (
-            collection(dbService, "stock") ,
-            orderBy("customOrd", "asc") 
+            collection(dbService, "portfolio", `${user.uid}`, "stocks") ,
+            orderBy("order", "asc") ,
         );
 
         onSnapshot( q, (snapshot) => {
@@ -19,39 +21,23 @@ function Portfolio( {user} ) {
                 ...doc.data(),
             }));
             setStocks(stockArray);
+            stockArray ? setIsNull(true) : setIsNull(false);
         });
     }
 
     useEffect(() => {
-        getStocks();    
-    }, []);
-
-    function onNewStockClick() {
-        setIsNewStock(!isNewStock);
-    }    
+        getStocks();
+    });
 
     return (
         <div className="container">
-            <Divided></Divided>
+            <Divided user = {user}/>
             <div>
-                {isNewStock?
-                    <button onClick={onNewStockClick}>
-                        주식을 입력하세요
-                    </button>
-                :
-                    <button onClick={onNewStockClick}>
-                        주식을 입력했어요
-                    </button>
-                }
-                
+                <StockFactory user = {user} isNull = {isNull}/> 
             </div>
             <div style={{ marginTop: 30 }}>
                 {stocks.map((stock) => (
-                    <>
-                        <div>
-                            주식 카드보드 예정
-                        </div>
-                    </>
+                    <Stock key={stock.id} user = {user} stock = {stock}/>
                 ))}
             </div>
         </div>
